@@ -1,0 +1,6 @@
+apiVersion: v2
+name: project15
+description: Flask API and PostgreSQL for Project 15
+type: application
+version: 0.1.1
+appVersion: "0.8.0"
