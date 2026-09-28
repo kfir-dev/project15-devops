@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Release.Name }}-database
+  namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
   strategy:
@@ -14,6 +15,10 @@ spec:
       labels:
         app: {{ .Release.Name }}-database
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: postgres
           image: {{ .Values.database.image | quote }}
