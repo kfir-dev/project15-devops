@@ -19,6 +19,7 @@ database:
   name: project15
   user: project15
   password: ""
+  existingSecret: ""
   storage: 1Gi
   resources:
     requests:

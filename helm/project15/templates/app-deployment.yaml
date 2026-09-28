@@ -50,7 +50,7 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-database
+                  name: {{ default (printf "%s-database" .Release.Name) .Values.database.existingSecret }}
                   key: DATABASE_URL
             - name: SECURITY_REPORTS_DIR
               valueFrom:
