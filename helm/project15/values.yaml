@@ -33,3 +33,6 @@ ingress:
   enabled: true
   className: nginx
   host: project15.local
+
+securityReports:
+  storage: 256Mi

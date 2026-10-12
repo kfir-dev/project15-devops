@@ -91,7 +91,13 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
+            - name: security-reports
+              mountPath: /app/security-reports
+              readOnly: true
       volumes:
         - name: tmp
           emptyDir:
             medium: Memory
+        - name: security-reports
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-security-reports
