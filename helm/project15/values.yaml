@@ -15,7 +15,7 @@ app:
       memory: 512Mi
 
 database:
-  image: postgres:15.19-bookworm
+  image: docker.io/library/postgres@sha256:d4a8e1f88f475ee3e0137fa89d21ebc59f6c6ab16bf369ee92907607cc3455ae
   name: project15
   user: project15
   password: ""

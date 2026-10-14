@@ -57,11 +57,6 @@ spec:
             - name: http
               containerPort: 8000
           env:
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ default (printf "%s-database" .Release.Name) .Values.database.existingSecret }}
-                  key: DATABASE_URL
             - name: SECURITY_REPORTS_DIR
               valueFrom:
                 configMapKeyRef:
@@ -89,12 +84,21 @@ spec:
           resources:
 {{ toYaml .Values.app.resources | indent 12 }}
           volumeMounts:
+            - name: database-secret
+              mountPath: /var/run/secrets/project15
+              readOnly: true
             - name: tmp
               mountPath: /tmp
             - name: security-reports
               mountPath: /app/security-reports
               readOnly: true
       volumes:
+        - name: database-secret
+          secret:
+            secretName: {{ default (printf "%s-database" .Release.Name) .Values.database.existingSecret }}
+            items:
+              - key: DATABASE_URL
+                path: DATABASE_URL
         - name: tmp
           emptyDir:
             medium: Memory

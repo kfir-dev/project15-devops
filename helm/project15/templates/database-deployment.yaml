@@ -17,10 +17,20 @@ spec:
     spec:
       automountServiceAccountToken: false
       securityContext:
+        fsGroup: 999
         seccompProfile:
           type: RuntimeDefault
       containers:
         - name: postgres
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+            runAsGroup: 999
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
           image: {{ .Values.database.image | quote }}
           ports:
             - name: postgres
@@ -29,11 +39,8 @@ spec:
             - configMapRef:
                 name: {{ .Release.Name }}-app
           env:
-            - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ default (printf "%s-database" .Release.Name) .Values.database.existingSecret }}
-                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_PASSWORD_FILE
+              value: /var/run/secrets/project15/POSTGRES_PASSWORD
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
           readinessProbe:
@@ -56,9 +63,28 @@ spec:
           resources:
 {{ toYaml .Values.database.resources | indent 12 }}
           volumeMounts:
+            - name: postgres-run
+              mountPath: /run/postgresql
+            - name: postgres-tmp
+              mountPath: /tmp
+            - name: database-secret
+              mountPath: /var/run/secrets/project15
+              readOnly: true
             - name: data
               mountPath: /var/lib/postgresql/data
       volumes:
+        - name: postgres-run
+          emptyDir:
+            medium: Memory
+        - name: postgres-tmp
+          emptyDir:
+            medium: Memory
+        - name: database-secret
+          secret:
+            secretName: {{ default (printf "%s-database" .Release.Name) .Values.database.existingSecret }}
+            items:
+              - key: POSTGRES_PASSWORD
+                path: POSTGRES_PASSWORD
         - name: data
           persistentVolumeClaim:
             claimName: {{ .Release.Name }}-database
