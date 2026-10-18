@@ -13,25 +13,52 @@ minikube addons enable ingress
 
 ## Install
 
-Create one local password file outside Git. Helm reads it without placing the password in the terminal history.
+Run commands from the repository root after preparing the image and Ingress.
+
+### External database credentials
+
+Before the first installation, provision an Opaque Secret named
+`project15-database-external` in namespace `project15`, independently of Helm.
+Required keys are `POSTGRES_PASSWORD` and `DATABASE_URL`. The URL must use
+the configured database user, database name and service, with the same
+password correctly URL-encoded.
+
+Keep credentials out of Git, Helm values, command arguments and terminal
+output. Keep the password field empty in Helm values.
+
+For an existing PVC, changing the Secret alone does not change the PostgreSQL
+role password. First test a protected backup by restoring it into isolated
+temporary storage. Then coordinate the role password and both Secret keys
+during an application maintenance window.
+
+Check that the external Secret exists without displaying its contents:
 
 ```bash
-install -d -m 700 "$HOME/.config/project15"
-# For a new cluster only: create the password once, then keep it for later upgrades.
-if [ ! -f "$HOME/.config/project15/postgres-password" ]; then
-  umask 077
-  openssl rand -hex 24 > "$HOME/.config/project15/postgres-password"
-fi
-cd ~/projects/project15-devops
-helm lint helm/project15 --set-file database.password=$HOME/.config/project15/postgres-password
-helm template project15 helm/project15 --set-file database.password=$HOME/.config/project15/postgres-password > /tmp/project15-rendered.yaml
-helm upgrade --install project15 helm/project15 \
-  --namespace project15 --create-namespace \
-  --set-file database.password=$HOME/.config/project15/postgres-password \
-  --wait --timeout 5m
+kubectl --context=minikube -n project15 get secret project15-database-external -o name
 ```
 
-Keep this password file private (mode 600) and outside Git. Reuse the same password when upgrading an existing PostgreSQL volume; generating a new one will break access to the existing database. The `values.yaml` file contains no password. Kubernetes and Helm release metadata retain the Secret; limit access to the cluster and release namespace.
+Install or upgrade using the checked-in local overrides:
+
+```bash
+helm upgrade --install project15 helm/project15 --kube-context minikube --namespace project15 --create-namespace -f helm/project15/values-local.yaml --history-max 2 --wait --timeout 5m
+```
+
+Retain two clean Helm revisions. This retention setting does not rotate
+passwords or clean Git history. Helm rollback does not revert the external
+Secret or the PostgreSQL role password; verify compatibility before rollback.
+
+### Verified rotation checkpoint: 2026-10-18
+
+- A protected backup was successfully restored in an isolated temporary Pod.
+- Both Deployments use the external Secret.
+- The PostgreSQL password and both Secret keys were rotated.
+- The new password authenticated and executed SELECT 1; the old password
+  was rejected.
+- Application readiness returned HTTP 200 and checks the database.
+- Both original PVC volume bindings were preserved.
+- Only clean Helm revisions 11 and 12 remained; revision 12 was deployed.
+- The legacy Secret, temporary restore Pod and temporary credential recovery
+  files were removed. The tested backup was retained outside Git.
 
 ## Verify
 
