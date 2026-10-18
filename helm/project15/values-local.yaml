@@ -1,0 +1,10 @@
+# Local Minikube overrides; credentials are stored in the external Secret.
+app:
+  image:
+    tag: "secret-file-v1"
+database:
+  existingSecret: "project15-database-external"
+  password: ""
+  image: "postgres:15.19-bookworm"
+securityReports:
+  storage: "256Mi"
