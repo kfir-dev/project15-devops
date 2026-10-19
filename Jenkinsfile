@@ -104,7 +104,7 @@ pipeline {
         stage('Build application image') {
             steps {
                 dir('application') {
-                    sh 'docker build --pull -t "project15-app:jenkins-$BUILD_NUMBER" .'
+                    sh 'docker build --pull --label "org.opencontainers.image.source=https://github.com/kfir-dev/project15-app" --label "org.opencontainers.image.revision=$(git rev-parse HEAD)" -t "project15-app:jenkins-$BUILD_NUMBER" .'
                 }
             }
         }
@@ -132,13 +132,31 @@ pipeline {
                 }
             }
         }
+
+        stage('Publish image to GHCR') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'ghcr-project15-push',
+                    usernameVariable: 'GHCR_USERNAME',
+                    passwordVariable: 'GHCR_TOKEN'
+                )]) {
+                    dir('devops') {
+                        sh '''
+                            set +x
+                            set -eu
+                            python3 ci/publish-image.py                                 "project15-app:jenkins-$BUILD_NUMBER"                                 ../application/reports                                 "$(git -C ../application rev-parse HEAD)"                                 "$BUILD_NUMBER"
+                        '''
+                    }
+                }
+            }
+        }
     }
 
     post {
         always {
             junit testResults: 'application/reports/pytest.xml',
                   allowEmptyResults: true
-            archiveArtifacts artifacts: 'application/reports/coverage.xml,application/reports/scan-report.json,application/reports/sbom.json,application/reports/grype-report.json',
+            archiveArtifacts artifacts: 'application/reports/coverage.xml,application/reports/scan-report.json,application/reports/sbom.json,application/reports/grype-report.json,application/reports/image-reference.txt,application/reports/image-publication.json',
                              allowEmptyArchive: true
         }
     }
