@@ -158,13 +158,21 @@ pipeline {
                 }
             }
         }
+
+        stage('Smoke tests: active deployment') {
+            steps {
+                dir('devops') {
+                    sh 'python3 ci/test-api.py ../application/reports'
+                }
+            }
+        }
     }
 
     post {
         always {
-            junit testResults: 'application/reports/pytest.xml',
+            junit testResults: 'application/reports/pytest.xml,application/reports/newman.xml',
                   allowEmptyResults: true
-            archiveArtifacts artifacts: 'application/reports/coverage.xml,application/reports/scan-report.json,application/reports/sbom.json,application/reports/grype-report.json,application/reports/image-reference.txt,application/reports/image-publication.json,application/reports/checkov-report.json',
+            archiveArtifacts artifacts: 'application/reports/coverage.xml,application/reports/scan-report.json,application/reports/sbom.json,application/reports/grype-report.json,application/reports/image-reference.txt,application/reports/image-publication.json,application/reports/checkov-report.json,application/reports/newman.xml',
                              allowEmptyArchive: true
         }
     }

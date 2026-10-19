@@ -52,4 +52,4 @@ Grype 0.120.1 scanned the locally generated SBOM and reported:
 
 The local Grype CRITICAL gate passed. Non-critical findings remain open
 for review; this does not record risk acceptance.
-The new Jenkins Grype stage still requires an integration run.
+Jenkins build 5 passed the integrated Grype stage and archived its report.

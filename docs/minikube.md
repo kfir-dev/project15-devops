@@ -37,6 +37,11 @@ Check that the external Secret exists without displaying its contents:
 kubectl --context=minikube -n project15 get secret project15-database-external -o name
 ```
 
+Provision an image pull Secret named `project15-ghcr-pull` in namespace
+`project15` before deploying the private GHCR image. Use a separate GitHub
+classic token with `read:packages` only. Keep its value outside Git,
+Helm values, terminal output and command arguments.
+
 Install or upgrade using the checked-in local overrides:
 
 ```bash
@@ -92,3 +97,21 @@ minikube stop
 ```
 
 Stopping preserves the cluster and PostgreSQL data. Do not delete the Minikube cluster or PVC when you want to resume later.
+
+## Verified GHCR deployment checkpoint: 2026-10-19
+
+- Jenkins build 7 passed, including Helm lint and Checkov.
+- Checkov reported 184 passed, 0 failed and 1 documented database UID exception.
+- A fresh protected PostgreSQL backup was created and its archive was readable.
+- Helm revision 13 was deployed successfully.
+- The application uses the tested GHCR digest:
+  `sha256:7375a18e93431860271c55f0bc6f5df4c8eef03e63983492d511206e490b0fab`.
+- PostgreSQL retains its existing image digest:
+  `sha256:d4a8e1f88f475ee3e0137fa89d21ebc59f6c6ab16bf369ee92907607cc3455ae`.
+- Both Deployments are ready and use the external database Secret.
+- PostgreSQL UID/GID 999, fsGroup 999 and Recreate strategy were preserved.
+- Both original PVC volume bindings were preserved.
+- Application liveness and database readiness returned HTTP 200.
+
+This deployment was performed as a controlled manual Helm upgrade.
+Automated deployment and post-deployment API testing remain to be added.

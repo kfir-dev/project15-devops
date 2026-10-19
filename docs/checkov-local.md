@@ -32,5 +32,5 @@ Diagnostic stderr is stored locally as checkov.log and is not archived.
 - Skipped: 1, exactly the documented PostgreSQL UID exception
 - Parsing errors: 0
 
-Jenkins integration still requires verification.
+Jenkins build 7 passed the integrated gate and archived checkov-report.json.
 The separate project15-gitops deployment is outside this local scan's scope.
