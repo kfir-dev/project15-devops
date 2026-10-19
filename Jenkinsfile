@@ -117,6 +117,14 @@ pipeline {
             }
         }
 
+        stage('Grype SBOM gate') {
+            steps {
+                dir('devops') {
+                    sh 'bash ci/scan-sbom.sh ../application/reports'
+                }
+            }
+        }
+
         stage('Trivy CRITICAL gate') {
             steps {
                 dir('devops') {
@@ -130,7 +138,7 @@ pipeline {
         always {
             junit testResults: 'application/reports/pytest.xml',
                   allowEmptyResults: true
-            archiveArtifacts artifacts: 'application/reports/coverage.xml,application/reports/scan-report.json,application/reports/sbom.json',
+            archiveArtifacts artifacts: 'application/reports/coverage.xml,application/reports/scan-report.json,application/reports/sbom.json,application/reports/grype-report.json',
                              allowEmptyArchive: true
         }
     }

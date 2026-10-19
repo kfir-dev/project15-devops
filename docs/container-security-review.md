@@ -34,3 +34,22 @@ Review the HIGH findings against Debian security advisories, assess
 application exposure, and track applicable package or base-image updates.
 Retain the findings in reports and rescan after updates.
 This checkpoint does not record risk acceptance or production approval.
+
+## Local SBOM and Grype verification: 2026-10-19
+
+Syft 1.54.1 produced a CycloneDX SBOM with 2,853 components.
+The SBOM parsed successfully and contained Flask and Gunicorn.
+Jenkins build 4 successfully archived sbom.json alongside the coverage
+and Trivy reports.
+
+Grype 0.120.1 scanned the locally generated SBOM and reported:
+- CRITICAL: 0
+- HIGH: 55
+- MEDIUM: 64
+- LOW: 12
+- NEGLIGIBLE: 47
+- UNKNOWN: 0
+
+The local Grype CRITICAL gate passed. Non-critical findings remain open
+for review; this does not record risk acceptance.
+The new Jenkins Grype stage still requires an integration run.
