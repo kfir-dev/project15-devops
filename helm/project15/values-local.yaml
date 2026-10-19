@@ -1,10 +1,16 @@
 # Local Minikube overrides; credentials are stored in the external Secret.
 app:
   image:
-    tag: "secret-file-v1"
+    repository: "ghcr.io/kfir-dev/project15-app"
+    tag: "sha-6eced3c06c8a6b1c66184d23bd10ab12051e27bc-build-6"
+    digest: "sha256:7375a18e93431860271c55f0bc6f5df4c8eef03e63983492d511206e490b0fab"
+    pullPolicy: Always
+  imagePullSecrets:
+    - name: project15-ghcr-pull
 database:
   existingSecret: "project15-database-external"
   password: ""
-  image: "postgres:15.19-bookworm"
+  image: "postgres:15.19-bookworm@sha256:d4a8e1f88f475ee3e0137fa89d21ebc59f6c6ab16bf369ee92907607cc3455ae"
+  imagePullPolicy: Always
 securityReports:
   storage: "256Mi"

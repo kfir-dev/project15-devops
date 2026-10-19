@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: {{ .Release.Name }}-database
   namespace: {{ .Release.Namespace }}
+  annotations:
+    checkov.io/skip1: "CKV_K8S_40=Keep PostgreSQL UID/GID 999 to preserve existing PVC ownership; see docs/checkov-exceptions.md"
 spec:
   replicas: 1
   strategy:
@@ -32,6 +34,7 @@ spec:
               drop:
                 - ALL
           image: {{ .Values.database.image | quote }}
+          imagePullPolicy: {{ .Values.database.imagePullPolicy | default "IfNotPresent" }}
           ports:
             - name: postgres
               containerPort: 5432

@@ -32,6 +32,14 @@ pipeline {
             }
         }
 
+        stage('Helm and Checkov') {
+            steps {
+                dir('devops') {
+                    sh 'bash ci/scan-kubernetes.sh ../application/reports'
+                }
+            }
+        }
+
         stage('Python environment') {
             steps {
                 dir('application') {
@@ -156,7 +164,7 @@ pipeline {
         always {
             junit testResults: 'application/reports/pytest.xml',
                   allowEmptyResults: true
-            archiveArtifacts artifacts: 'application/reports/coverage.xml,application/reports/scan-report.json,application/reports/sbom.json,application/reports/grype-report.json,application/reports/image-reference.txt,application/reports/image-publication.json',
+            archiveArtifacts artifacts: 'application/reports/coverage.xml,application/reports/scan-report.json,application/reports/sbom.json,application/reports/grype-report.json,application/reports/image-reference.txt,application/reports/image-publication.json,application/reports/checkov-report.json',
                              allowEmptyArchive: true
         }
     }
