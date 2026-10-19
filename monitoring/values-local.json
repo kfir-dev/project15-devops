@@ -1,0 +1,225 @@
+{
+  "grafana": {
+    "adminPassword": "",
+    "admin": {
+      "existingSecret": "project15-grafana-admin",
+      "userKey": "admin-user",
+      "passwordKey": "admin-password"
+    },
+    "service": {
+      "type": "ClusterIP"
+    },
+    "ingress": {
+      "enabled": false
+    },
+    "persistence": {
+      "enabled": true,
+      "type": "pvc",
+      "storageClassName": "standard",
+      "accessModes": [
+        "ReadWriteOnce"
+      ],
+      "size": "1Gi"
+    },
+    "resources": {
+      "requests": {
+        "cpu": "50m",
+        "memory": "256Mi"
+      },
+      "limits": {
+        "cpu": "300m",
+        "memory": "768Mi"
+      }
+    },
+    "sidecar": {
+      "resources": {
+        "requests": {
+          "cpu": "10m",
+          "memory": "32Mi"
+        },
+        "limits": {
+          "cpu": "100m",
+          "memory": "128Mi"
+        }
+      }
+    }
+  },
+  "prometheus": {
+    "service": {
+      "type": "ClusterIP"
+    },
+    "ingress": {
+      "enabled": false
+    },
+    "prometheusSpec": {
+      "retention": "2d",
+      "retentionSize": "1GB",
+      "scrapeInterval": "30s",
+      "evaluationInterval": "30s",
+      "enableAdminAPI": false,
+      "resources": {
+        "requests": {
+          "cpu": "100m",
+          "memory": "256Mi"
+        },
+        "limits": {
+          "cpu": "700m",
+          "memory": "1Gi"
+        }
+      },
+      "storageSpec": {
+        "volumeClaimTemplate": {
+          "spec": {
+            "storageClassName": "standard",
+            "accessModes": [
+              "ReadWriteOnce"
+            ],
+            "resources": {
+              "requests": {
+                "storage": "2Gi"
+              }
+            }
+          }
+        }
+      },
+      "externalLabels": {
+        "project": "project15",
+        "environment": "local"
+      },
+      "additionalScrapeConfigs": [
+        {
+          "job_name": "project15-app",
+          "metrics_path": "/metrics",
+          "scrape_interval": "15s",
+          "static_configs": [
+            {
+              "targets": [
+                "project15-app.project15.svc.cluster.local:8000"
+              ],
+              "labels": {
+                "namespace": "project15",
+                "application": "project15-app"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "alertmanager": {
+    "service": {
+      "type": "ClusterIP"
+    },
+    "ingress": {
+      "enabled": false
+    },
+    "alertmanagerSpec": {
+      "resources": {
+        "requests": {
+          "cpu": "25m",
+          "memory": "64Mi"
+        },
+        "limits": {
+          "cpu": "200m",
+          "memory": "128Mi"
+        }
+      },
+      "storage": {
+        "volumeClaimTemplate": {
+          "spec": {
+            "storageClassName": "standard",
+            "accessModes": [
+              "ReadWriteOnce"
+            ],
+            "resources": {
+              "requests": {
+                "storage": "1Gi"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "prometheusOperator": {
+    "resources": {
+      "requests": {
+        "cpu": "50m",
+        "memory": "128Mi"
+      },
+      "limits": {
+        "cpu": "300m",
+        "memory": "256Mi"
+      }
+    }
+  },
+  "kube-state-metrics": {
+    "resources": {
+      "requests": {
+        "cpu": "20m",
+        "memory": "64Mi"
+      },
+      "limits": {
+        "cpu": "200m",
+        "memory": "128Mi"
+      }
+    }
+  },
+  "prometheus-node-exporter": {
+    "resources": {
+      "requests": {
+        "cpu": "10m",
+        "memory": "32Mi"
+      },
+      "limits": {
+        "cpu": "100m",
+        "memory": "64Mi"
+      }
+    }
+  },
+  "kubeEtcd": {
+    "enabled": false
+  },
+  "kubeControllerManager": {
+    "enabled": false
+  },
+  "kubeScheduler": {
+    "enabled": false
+  },
+  "kubeProxy": {
+    "enabled": false
+  },
+  "defaultRules": {
+    "rules": {
+      "etcd": false,
+      "kubeControllerManager": false,
+      "kubeSchedulerAlerting": false,
+      "kubeSchedulerRecording": false,
+      "kubeProxy": false
+    }
+  },
+  "additionalPrometheusRulesMap": {
+    "project15-application": {
+      "groups": [
+        {
+          "name": "project15.application",
+          "rules": [
+            {
+              "alert": "Project15MetricsUnavailable",
+              "expr": "up{job=\"project15-app\"} == 0 or absent(up{job=\"project15-app\"})",
+              "for": "2m",
+              "labels": {
+                "severity": "critical",
+                "project": "project15"
+              },
+              "annotations": {
+                "summary": "Project15 application metrics are unavailable",
+                "description": "Prometheus cannot scrape the application metrics endpoint."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

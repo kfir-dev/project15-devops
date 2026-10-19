@@ -1,0 +1,7 @@
+{
+  "chart": "kube-prometheus-stack",
+  "version": "92.10.1",
+  "repository": "https://prometheus-community.github.io/helm-charts",
+  "archive": "kube-prometheus-stack-92.10.1.tgz",
+  "sha256": "0d16c44e941372400ee8bcdc232ebee957eefcc910f8833767d8b94145f20094"
+}
