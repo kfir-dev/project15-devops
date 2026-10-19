@@ -109,6 +109,14 @@ pipeline {
             }
         }
 
+        stage('Generate SBOM') {
+            steps {
+                dir('devops') {
+                    sh 'bash ci/generate-sbom.sh "project15-app:jenkins-$BUILD_NUMBER" ../application/reports'
+                }
+            }
+        }
+
         stage('Trivy CRITICAL gate') {
             steps {
                 dir('devops') {
@@ -122,7 +130,7 @@ pipeline {
         always {
             junit testResults: 'application/reports/pytest.xml',
                   allowEmptyResults: true
-            archiveArtifacts artifacts: 'application/reports/coverage.xml,application/reports/scan-report.json',
+            archiveArtifacts artifacts: 'application/reports/coverage.xml,application/reports/scan-report.json,application/reports/sbom.json',
                              allowEmptyArchive: true
         }
     }
