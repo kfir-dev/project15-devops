@@ -159,7 +159,15 @@ pipeline {
             }
         }
 
-        stage('Smoke tests: active deployment') {
+        stage('Deploy to Minikube') {
+            steps {
+                dir('devops') {
+                    sh 'python3 ci/deploy-minikube.py ../application/reports --execute'
+                }
+            }
+        }
+
+        stage('Post-deployment API tests') {
             steps {
                 dir('devops') {
                     sh 'python3 ci/test-api.py ../application/reports'
@@ -172,7 +180,7 @@ pipeline {
         always {
             junit testResults: 'application/reports/pytest.xml,application/reports/newman.xml',
                   allowEmptyResults: true
-            archiveArtifacts artifacts: 'application/reports/coverage.xml,application/reports/scan-report.json,application/reports/sbom.json,application/reports/grype-report.json,application/reports/image-reference.txt,application/reports/image-publication.json,application/reports/checkov-report.json,application/reports/newman.xml',
+            archiveArtifacts artifacts: 'application/reports/coverage.xml,application/reports/scan-report.json,application/reports/sbom.json,application/reports/grype-report.json,application/reports/image-reference.txt,application/reports/image-publication.json,application/reports/checkov-report.json,application/reports/newman.xml,application/reports/deployment.json',
                              allowEmptyArchive: true
         }
     }

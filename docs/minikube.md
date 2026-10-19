@@ -114,4 +114,4 @@ Stopping preserves the cluster and PostgreSQL data. Do not delete the Minikube c
 - Application liveness and database readiness returned HTTP 200.
 
 This deployment was performed as a controlled manual Helm upgrade.
-Automated deployment and post-deployment API testing remain to be added.
+See deployment-automation.md for the subsequent automation work.

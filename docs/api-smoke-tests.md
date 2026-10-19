@@ -22,9 +22,10 @@ container is removed, and newman.xml is retained for Jenkins.
 All 3 requests and all 15 assertions passed against Helm revision 13.
 The JUnit report contained 15 passing test cases.
 
-The current Jenkins stage tests the active deployment. It does not yet
-deploy the newly published image; deployment automation remains pending.
+The Jenkins stage now follows deployment of the image published by the same
+build. See deployment-automation.md for deployment guards and backup behavior.
 These smoke tests complement the Python suite and do not cover full
 product, cart and order write workflows.
 
-Jenkins smoke-stage integration still requires verification.
+Jenkins build 8 verified the active-deployment smoke stage.
+The new deployment and post-deployment test sequence still requires verification.
