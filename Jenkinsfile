@@ -23,6 +23,14 @@ pipeline {
             }
         }
 
+        stage('GitLeaks: both repositories') {
+            steps {
+                dir('devops') {
+                    sh 'bash ci/scan-secrets.sh . ../application'
+                }
+            }
+        }
+
         stage('Python environment') {
             steps {
                 dir('application') {
