@@ -12,6 +12,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
+                deleteDir()
                 dir('devops') {
                     checkout scm
                 }
@@ -99,13 +100,29 @@ pipeline {
                 }
             }
         }
+
+        stage('Build application image') {
+            steps {
+                dir('application') {
+                    sh 'docker build --pull -t "project15-app:jenkins-$BUILD_NUMBER" .'
+                }
+            }
+        }
+
+        stage('Trivy CRITICAL gate') {
+            steps {
+                dir('devops') {
+                    sh 'bash ci/scan-image.sh "project15-app:jenkins-$BUILD_NUMBER" ../application/reports'
+                }
+            }
+        }
     }
 
     post {
         always {
             junit testResults: 'application/reports/pytest.xml',
                   allowEmptyResults: true
-            archiveArtifacts artifacts: 'application/reports/coverage.xml',
+            archiveArtifacts artifacts: 'application/reports/coverage.xml,application/reports/scan-report.json',
                              allowEmptyArchive: true
         }
     }
