@@ -1,0 +1,138 @@
+{
+  "fullnameOverride": "project15-alloy",
+  "crds": {
+    "create": false
+  },
+  "controller": {
+    "type": "deployment",
+    "replicas": 1,
+    "hostNetwork": false,
+    "hostPID": false,
+    "volumes": {
+      "extra": [
+        {
+          "name": "alloy-tmp",
+          "emptyDir": {
+            "sizeLimit": "256Mi"
+          }
+        }
+      ]
+    }
+  },
+  "global": {
+    "podSecurityContext": {
+      "fsGroup": 10001,
+      "seccompProfile": {
+        "type": "RuntimeDefault"
+      }
+    }
+  },
+  "serviceAccount": {
+    "create": true,
+    "name": "project15-alloy",
+    "automountServiceAccountToken": true
+  },
+  "rbac": {
+    "create": true,
+    "namespaces": [
+      "project15"
+    ],
+    "rules": [
+      {
+        "apiGroups": [
+          ""
+        ],
+        "resources": [
+          "pods"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          ""
+        ],
+        "resources": [
+          "pods/log"
+        ],
+        "verbs": [
+          "get"
+        ]
+      }
+    ],
+    "clusterRules": []
+  },
+  "alloy": {
+    "enableReporting": false,
+    "storagePath": "/tmp/alloy",
+    "configMap": {
+      "create": true,
+      "content": "logging {\n  level = \"warn\"\n}\n\ndiscovery.kubernetes \"project15\" {\n  role = \"pod\"\n  namespaces {\n    names = [\"project15\"]\n  }\n  selectors {\n    role = \"pod\"\n    label = \"app in (project15-app,project15-database)\"\n  }\n}\n\ndiscovery.relabel \"project15\" {\n  targets = discovery.kubernetes.project15.targets\n\n  rule {\n    source_labels = [\"__meta_kubernetes_namespace\"]\n    target_label = \"namespace\"\n  }\n  rule {\n    source_labels = [\"__meta_kubernetes_pod_name\"]\n    target_label = \"pod\"\n  }\n  rule {\n    source_labels = [\"__meta_kubernetes_pod_container_name\"]\n    target_label = \"container\"\n  }\n  rule {\n    source_labels = [\"__meta_kubernetes_pod_label_app\"]\n    target_label = \"application\"\n  }\n  rule {\n    target_label = \"job\"\n    replacement = \"project15-logs\"\n  }\n}\n\nloki.source.kubernetes \"project15\" {\n  targets = discovery.relabel.project15.output\n  forward_to = [loki.process.project15.receiver]\n}\n\nloki.process \"project15\" {\n  stage.drop {\n    expression = \"(?i)(password|authorization|bearer|token|secret|postgres(ql)?://)\"\n    drop_counter_reason = \"sensitive_log\"\n  }\n  forward_to = [loki.write.local.receiver]\n}\n\nloki.write \"local\" {\n  endpoint {\n    url = \"http://project15-loki.logging.svc.cluster.local:3100/loki/api/v1/push\"\n  }\n}\n"
+    },
+    "mounts": {
+      "varlog": false,
+      "dockercontainers": false,
+      "extra": [
+        {
+          "name": "alloy-tmp",
+          "mountPath": "/tmp"
+        }
+      ]
+    },
+    "securityContext": {
+      "runAsNonRoot": true,
+      "runAsUser": 10001,
+      "runAsGroup": 10001,
+      "allowPrivilegeEscalation": false,
+      "readOnlyRootFilesystem": true,
+      "capabilities": {
+        "drop": [
+          "ALL"
+        ]
+      },
+      "seccompProfile": {
+        "type": "RuntimeDefault"
+      }
+    },
+    "resources": {
+      "requests": {
+        "cpu": "50m",
+        "memory": "128Mi"
+      },
+      "limits": {
+        "cpu": "300m",
+        "memory": "512Mi"
+      }
+    }
+  },
+  "configReloader": {
+    "resources": {
+      "requests": {
+        "cpu": "10m",
+        "memory": "32Mi"
+      },
+      "limits": {
+        "cpu": "100m",
+        "memory": "64Mi"
+      }
+    }
+  },
+  "service": {
+    "type": "ClusterIP"
+  },
+  "ingress": {
+    "enabled": false
+  },
+  "serviceMonitor": {
+    "enabled": false
+  },
+  "image": {
+    "registry": "docker.io",
+    "repository": "grafana/alloy",
+    "tag": "v1.21.0",
+    "digest": "sha256:9726bfba078de9bc2212c60c6e643238c700b4fe0868ea78cbe03163d03d95bf"
+  }
+}

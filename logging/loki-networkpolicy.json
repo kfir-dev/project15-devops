@@ -1,0 +1,57 @@
+{
+  "apiVersion": "networking.k8s.io/v1",
+  "kind": "NetworkPolicy",
+  "metadata": {
+    "name": "project15-loki-ingress",
+    "namespace": "logging"
+  },
+  "spec": {
+    "podSelector": {
+      "matchLabels": {
+        "app.kubernetes.io/name": "loki",
+        "app.kubernetes.io/instance": "project15-loki"
+      }
+    },
+    "policyTypes": [
+      "Ingress"
+    ],
+    "ingress": [
+      {
+        "from": [
+          {
+            "namespaceSelector": {
+              "matchLabels": {
+                "kubernetes.io/metadata.name": "logging"
+              }
+            },
+            "podSelector": {
+              "matchLabels": {
+                "app.kubernetes.io/name": "alloy",
+                "app.kubernetes.io/instance": "project15-alloy"
+              }
+            }
+          },
+          {
+            "namespaceSelector": {
+              "matchLabels": {
+                "kubernetes.io/metadata.name": "monitoring"
+              }
+            },
+            "podSelector": {
+              "matchLabels": {
+                "app.kubernetes.io/name": "grafana",
+                "app.kubernetes.io/instance": "project15-monitoring"
+              }
+            }
+          }
+        ],
+        "ports": [
+          {
+            "protocol": "TCP",
+            "port": 3100
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,58 @@
+logging {
+  level = "warn"
+}
+
+discovery.kubernetes "project15" {
+  role = "pod"
+  namespaces {
+    names = ["project15"]
+  }
+  selectors {
+    role = "pod"
+    label = "app in (project15-app,project15-database)"
+  }
+}
+
+discovery.relabel "project15" {
+  targets = discovery.kubernetes.project15.targets
+
+  rule {
+    source_labels = ["__meta_kubernetes_namespace"]
+    target_label = "namespace"
+  }
+  rule {
+    source_labels = ["__meta_kubernetes_pod_name"]
+    target_label = "pod"
+  }
+  rule {
+    source_labels = ["__meta_kubernetes_pod_container_name"]
+    target_label = "container"
+  }
+  rule {
+    source_labels = ["__meta_kubernetes_pod_label_app"]
+    target_label = "application"
+  }
+  rule {
+    target_label = "job"
+    replacement = "project15-logs"
+  }
+}
+
+loki.source.kubernetes "project15" {
+  targets = discovery.relabel.project15.output
+  forward_to = [loki.process.project15.receiver]
+}
+
+loki.process "project15" {
+  stage.drop {
+    expression = "(?i)(password|authorization|bearer|token|secret|postgres(ql)?://)"
+    drop_counter_reason = "sensitive_log"
+  }
+  forward_to = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://project15-loki.logging.svc.cluster.local:3100/loki/api/v1/push"
+  }
+}
