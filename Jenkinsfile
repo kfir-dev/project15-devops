@@ -174,13 +174,21 @@ pipeline {
                 }
             }
         }
+
+        stage('Post-deployment ZAP passive scan') {
+            steps {
+                dir('devops') {
+                    sh 'python3 ci/scan-api.py ../application/reports'
+                }
+            }
+        }
     }
 
     post {
         always {
             junit testResults: 'application/reports/pytest.xml,application/reports/newman.xml',
                   allowEmptyResults: true
-            archiveArtifacts artifacts: 'application/reports/coverage.xml,application/reports/scan-report.json,application/reports/sbom.json,application/reports/grype-report.json,application/reports/image-reference.txt,application/reports/image-publication.json,application/reports/checkov-report.json,application/reports/newman.xml,application/reports/deployment.json',
+            archiveArtifacts artifacts: 'application/reports/coverage.xml,application/reports/scan-report.json,application/reports/sbom.json,application/reports/grype-report.json,application/reports/image-reference.txt,application/reports/image-publication.json,application/reports/checkov-report.json,application/reports/newman.xml,application/reports/deployment.json,application/reports/zap-report.json,application/reports/zap-report.html,application/reports/zap-coverage.json,application/reports/zap-summary.json',
                              allowEmptyArchive: true
         }
     }
