@@ -75,7 +75,7 @@ Its expression is:
     up{job="project15-app"} == 0 or absent(up{job="project15-app"})
 
 The configured pending duration is 2 minutes.
-End-to-end alert delivery to Alertmanager has not yet been tested.
+On 2026-10-19, a temporary synthetic PrometheusRule was verified firing in Prometheus, and the same uniquely labelled alert was received by Alertmanager. The temporary rule was removed after verification. Application Deployments and PVCs were unchanged. This verifies the internal delivery path; the actual application-outage condition and its 2-minute pending duration were not exercised.
 No external notification destination has been configured or verified.
 
 ## Shutdown
