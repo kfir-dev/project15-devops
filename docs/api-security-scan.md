@@ -74,10 +74,18 @@ Synthetic report tests accepted a clean report and rejected a HIGH finding,
 an unknown severity, an unexpected target and missing sites. The HIGH case
 also produced failure metadata before rejecting the report.
 
-## Pending verification
+## Jenkins verification
 
-The new application commit has not yet been verified by this ZAP stage in
-Jenkins. A successful pipeline run must establish deployment of the newly
-built digest, endpoint coverage, final finding counts and archived reports.
-Do not infer that the LOW finding is resolved in the live deployment from
-the unit tests alone.
+Jenkins build #10 succeeded using DevOps commit 51fc58a and application
+commit a94d286. All four ZAP reports were archived with the build.
+
+The archived summary reported a passing gate and verified coverage:
+HIGH 0, MEDIUM 0, LOW 0 and INFORMATIONAL 0.
+
+Coverage metadata reported zero active scans, zero pending passive records,
+zero unsafe methods and zero unexpected paths. Rule 10021 was absent,
+confirming that the missing nosniff finding was resolved for the three
+scoped GET operations in the deployed application.
+
+These results apply to the defined passive scope and do not establish
+whole-application or active security-test coverage.
