@@ -1,0 +1,27 @@
+services:
+  terraform-state-db:
+    image: postgres:16
+    container_name: project15-terraform-state-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: terraform
+      POSTGRES_DB: terraform_state
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - terraform_state_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U terraform -d terraform_state"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+secrets:
+  postgres_password:
+    file: ${TERRAFORM_STATE_PASSWORD_FILE:-${HOME}/.config/project15-terraform/secrets/postgres-password}
+
+volumes:
+  terraform_state_data:

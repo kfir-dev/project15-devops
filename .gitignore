@@ -1,0 +1,21 @@
+# Terraform local files
+**/.terraform/
+**/*.tfstate
+**/*.tfstate.*
+**/*.tfplan
+**/*.tfvars
+**/*.tfvars.json
+**/.terraform.tfstate.lock.info
+crash.log
+crash.*.log
+
+# Secrets and local environment files
+.env
+.env.*
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.pyc
+.venv/
