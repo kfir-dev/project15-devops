@@ -61,6 +61,14 @@ pipeline {
             }
         }
 
+        stage('Dockerfile lint: Hadolint') {
+            steps {
+                dir('devops') {
+                    sh 'python3 ci/lint-dockerfile.py ../application'
+                }
+            }
+        }
+
         stage('Lint') {
             steps {
                 dir('application') {
@@ -197,7 +205,7 @@ pipeline {
         always {
             junit testResults: 'application/reports/pytest.xml,application/reports/newman.xml',
                   allowEmptyResults: true
-            archiveArtifacts artifacts: 'application/reports/pip-audit.json,application/reports/coverage.xml,application/reports/scan-report.json,application/reports/sbom.json,application/reports/grype-report.json,application/reports/image-reference.txt,application/reports/image-publication.json,application/reports/checkov-report.json,application/reports/newman.xml,application/reports/deployment.json,application/reports/zap-report.json,application/reports/zap-report.html,application/reports/zap-coverage.json,application/reports/zap-summary.json',
+            archiveArtifacts artifacts: 'application/reports/pip-audit.json,application/reports/hadolint.json,application/reports/coverage.xml,application/reports/scan-report.json,application/reports/sbom.json,application/reports/grype-report.json,application/reports/image-reference.txt,application/reports/image-publication.json,application/reports/checkov-report.json,application/reports/newman.xml,application/reports/deployment.json,application/reports/zap-report.json,application/reports/zap-report.html,application/reports/zap-coverage.json,application/reports/zap-summary.json',
                              allowEmptyArchive: true
         }
     }
