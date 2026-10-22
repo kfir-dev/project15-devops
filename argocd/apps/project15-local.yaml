@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: project15-gitops
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: git@github.com:kfir-dev/project15-devops.git
+    targetRevision: main
+    path: helm/project15
+    helm:
+      releaseName: project15-gitops
+      valuesObject:
+        app:
+          image:
+            repository: ghcr.io/kfir-dev/project15-app
+            digest: sha256:e89154c9c61184bba00f68710334221a2f14885be7639e98863c72ebae07d248
+            pullPolicy: IfNotPresent
+          imagePullSecrets:
+            - name: project15-ghcr-pull
+          service:
+            type: ClusterIP
+        database:
+          existingSecret: project15-gitops-database
+        ingress:
+          host: project15-gitops.local
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: project15-gitops
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
