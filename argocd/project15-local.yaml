@@ -14,9 +14,9 @@ spec:
       valuesObject:
         app:
           image:
-            repository: project15-app
-            tag: db-recovery-v0.9.0
-            pullPolicy: Never
+            repository: ghcr.io/kfir-dev/project15-app
+            digest: sha256:e89154c9c61184bba00f68710334221a2f14885be7639e98863c72ebae07d248
+            pullPolicy: IfNotPresent
           service:
             type: ClusterIP
         database:
