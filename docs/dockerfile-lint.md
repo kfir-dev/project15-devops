@@ -33,9 +33,14 @@ DL3006, a failing gate and a retained JSON report. The fixture was removed.
 
 ## Remaining verification and maintenance
 
-The updated image build and Jenkins stage still require verification by
-a complete pipeline run. Local lint success does not prove that the image
-build or deployment succeeds.
+Jenkins build #14 succeeded on 2026-10-22 using DevOps commit 3806299
+and application commit e004bae. The complete pipeline built, scanned,
+published and deployed the updated application image successfully.
+
+The archived hadolint.json contained zero findings. The pip-audit report
+contained 59 dependencies, zero skipped packages and zero vulnerabilities.
+The scoped passive ZAP gate passed with verified coverage and zero findings
+in every reported severity category.
 
 Review the package pin when security updates are released. Debian can
 replace older package versions in its repositories, so future builds may
