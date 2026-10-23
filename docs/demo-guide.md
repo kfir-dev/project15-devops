@@ -1,6 +1,6 @@
 # Project 15 — demonstration and rehearsal
 
-Prepared on 2026-10-23. Target a 12–15 minute demonstration, followed by questions. Use the already verified environment and artifacts; do not introduce disruptive changes during the presentation.
+Updated on 2026-10-24 using successful build #16 and the latest runtime/Terraform checks. Target a 12–15 minute demonstration, followed by questions. Use the already verified environment and artifacts; do not introduce disruptive changes during the presentation.
 
 ## Opening explanation
 
@@ -11,8 +11,8 @@ This project delivers a Flask e-commerce API with PostgreSQL through a security-
 | Time | Show | Explain |
 | --- | --- | --- |
 | 0–2 min | DevOps README architecture and the two repositories | Boundaries between application code, delivery code, runtime data and credentials |
-| 2–6 min | Jenkins build #14 stage overview and artifacts | What each gate checks, which failures block delivery, and why publication follows the pre-deployment gates |
-| 6–8 min | Application readiness and product list; a security report endpoint | Readiness includes database connectivity; artifact availability is distinct from latest-build provenance |
+| 2–6 min | Jenkins build #16 stage overview and artifacts | What each gate checks, which failures block delivery, and why publication follows the pre-deployment gates |
+| 6–8 min | Application readiness and product list; a security report endpoint | Readiness includes database connectivity; show sbom-binding.json and security-reports-publication.json, then explain the verified match between live reports and build artifacts |
 | 8–10 min | Grafana application dashboard | Request rate, errors, p95 latency, scrape availability and business counter |
 | 10–11 min | Grafana Explore, Project15 Loki datasource | Filter `{job="project15-logs", namespace="project15"}`; avoid displaying sensitive raw log entries |
 | 11–12 min | Argo CD Applications and separate workload namespace | Git is desired state; baseline and GitOps resources have different owners |
@@ -57,7 +57,7 @@ Answer in your own words before consulting the checkpoints.
 
 1. **What happens from commit to deployment?** Describe checkout, tests, scans, image build, SBOM, image gates, publication, guarded deployment and post-deployment checks. The job was demonstrated through manual Build Now; do not claim an automatic commit trigger unless separately verified.
 2. **How do SAST, SCA, container scanning and DAST differ?** Relate them to SonarQube, pip-audit, Trivy/Grype and the limited passive ZAP scope. Each has different coverage.
-3. **Why publish and deploy a digest?** A digest identifies content. A tag can be moved. Connect publication metadata to the image actually deployed.
+3. **Why publish and deploy a digest?** A digest identifies content. A tag can be moved. Connect publication metadata to the image actually deployed. An OCI index digest, platform manifest digest and image configuration digest can differ; the binding verifies their relationship instead of treating every SHA256 value as interchangeable.
 4. **Does a green build mean the application is secure?** No. Explain configured thresholds, the documented Checkov exception, outstanding HIGH findings and untested scope.
 5. **What is an SBOM?** A component inventory supports traceability and downstream analysis. It is not itself proof that components are safe or licenses comply with policy.
 6. **What is the difference between liveness and readiness?** Liveness concerns process health; readiness determines whether the application can serve traffic, including its database dependency here.
@@ -67,7 +67,10 @@ Answer in your own words before consulting the checkpoints.
 10. **Why are Jenkins and Argo CD both present?** They manage separate namespaces here. Avoid two controllers writing the same resource. Automatic image promotion to GitOps is not part of the demonstrated flow.
 11. **What does Terraform actually manage?** One namespace per workspace through a reusable module, with state in a separate PostgreSQL database. The Minikube cluster itself is pre-existing.
 12. **What proves observability works?** Collected metrics, a viewed dashboard, an internally delivered test alert, actual Loki entries and a blocked unauthorized connection. External notification delivery remains incomplete.
-13. **What would you improve next?** Prioritize exact requirement gaps and operational risks: named SCA tool acceptance, cluster provisioning, backend requirements, branch protection, external alerts, license policy and wider integration/security testing.
+13. **What would you improve next?** Prioritize exact requirement gaps and operational risks: named SCA tool acceptance, cluster provisioning, backend requirements, external alerts, license policy and wider integration/security testing.
+
+14. **Why did a logging check fail while Loki was healthy?** The old check required messages in the last 15 minutes from both services. The database had produced no new logs in that interval. Comparing the latest source and Loki timestamps confirmed delivery; a quiet service is different from a collector lagging behind its source.
+15. **What was fixed in report publication?** HTTP 200 alone did not prove freshness. A new stage publishes reports bound to the deployed image, verifies live content hashes and preserves previous report bytes and safe legacy links for recovery.
 
 ## Presentation boundaries
 

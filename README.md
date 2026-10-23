@@ -41,7 +41,8 @@ The declarative Jenkinsfile checks out both repositories and runs:
 7. Grype and Trivy CRITICAL gates.
 8. GHCR publication with image digest metadata.
 9. Guarded deployment of the digest published by that build.
-10. Newman smoke tests and scoped passive ZAP.
+10. Image-bound report publication to the existing reports PVC, with backup and verification.
+11. Newman smoke tests and scoped passive ZAP.
 
 The deployment script checks the proposed changes, creates a protected database backup and verifies application health and preservation of database specifications, credential Secrets and existing PVC bindings.
 
@@ -49,13 +50,17 @@ Jenkins archives test, scan, publication and deployment evidence.
 
 ## Verified checkpoint
 
-Jenkins build **#14** succeeded on **2026-10-22** using:
+Jenkins build **#16** succeeded using:
 
-- DevOps commit: `3806299`
-- Application commit: `e004bae`
-- Hadolint: zero findings
-- pip-audit: 59 dependencies, zero skipped and zero vulnerabilities
-- Scoped passive ZAP: verified coverage and zero findings
+- DevOps commit: `8eca62d70ca8fadac6026569615638e45511519d`
+- Application commit: `b9e9381222eedcbc8547f66d982945b2a716ef4d`
+- Security-report binding and publication artifacts retained
+- Full pipeline, including Newman and scoped passive ZAP, completed successfully
+
+The 2026-10-24 runtime recheck passed all seven operational checks. Both live
+security reports and the deployed image digest matched build #16. Terraform
+validation and no-change plans passed for dev, staging and prod. See
+[final verification](docs/final-verification.md) for evidence and limits.
 
 This successful build demonstrates the implemented pipeline. It does not mean that every project requirement or every vulnerability category is fully covered.
 
@@ -73,6 +78,10 @@ Jenkins and Argo CD manage separate application resources. The GitOps applicatio
 
 | Topic | Guide |
 | --- | --- |
+| Final verification | [Build #16 and operational evidence](docs/final-verification.md) |
+| Repository governance | [Public access and main protection](docs/repository-governance.md) |
+| Submission | [Evidence and remaining gaps](docs/submission-checklist.md) |
+| Demonstration | [Rehearsal guide](docs/demo-guide.md) |
 | Minikube | [Local cluster](docs/minikube.md) |
 | Deployment and backups | [Deployment automation](docs/deployment-automation.md) |
 | Current security reports | [Publication and recovery](docs/security-report-publication.md) |
@@ -98,7 +107,7 @@ ZAP covers three GET operations in passive mode. Authentication, write-operation
 
 Application unit tests cover product, cart and order behavior, while the deployed Newman smoke collection currently covers three GET operations.
 
-External Alertmanager notifications, branch-protection evidence and automated license-policy enforcement remain unverified or incomplete. Outstanding HIGH container findings are documented separately.
+Both public repositories have protected main branches; see the governance guide. External Alertmanager notifications and automated license-policy enforcement remain unverified or incomplete. Outstanding HIGH container findings are documented separately.
 
 The GitHub Actions workflows provide additional checks; the complete publication and deployment path demonstrated here runs in Jenkins.
 

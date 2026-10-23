@@ -80,6 +80,14 @@ owner-only permissions and remove them when no longer required.
 During shutdown, stop the backend container while retaining its volume.
 Never use volume deletion as a shutdown operation.
 
+## Reverification on 2026-10-24
+
+The backend was started with its existing volume retained. Validation was
+valid with zero errors and zero warnings. Plans for dev, staging and prod
+all returned no changes. The selected workspace was preserved; no apply,
+initialization, workspace creation or resource change was performed.
+Protected plans and diagnostics remain outside Git.
+
 ## Requirement differences
 
 The project specification calls for cluster provisioning and names

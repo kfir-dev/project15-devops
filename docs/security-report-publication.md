@@ -91,6 +91,15 @@ read-only application mounts and the restricted temporary-Pod manifest.
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p test_report_publication.py -v
 ```
 
-Live repair and a complete Jenkins execution must be verified before
-claiming that this change resolved report provenance. Historical build #14
-predates this publication stage.
+## Verified delivery checkpoint
+
+Jenkins build #16 succeeded at DevOps revision `8eca62d` and application
+revision `b9e9381`, retaining both binding and publication receipts. A later
+runtime check confirmed that canonical JSON hashes of both live report
+endpoints matched the retained build reports and that the deployed image
+reference matched the same build. All 28 publisher tests passed on Linux.
+
+Build #15 stopped safely on pre-existing internal report symlinks before
+publication. PR #2 added constrained migration and link-preserving recovery;
+absolute, dangling and escaping links remain rejected. See
+[final verification](final-verification.md) for the complete evidence scope.
