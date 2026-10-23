@@ -4,6 +4,7 @@ import hashlib
 import importlib.util
 import io
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -94,6 +95,83 @@ class ReportTransferTests(unittest.TestCase):
 
     def test_unknown_operation_rejected(self):
         self.assertNotEqual(self.transfer({"operation": "delete-all"}).returncode, 0)
+        self.assert_unchanged()
+
+    def legacy_links(self):
+        directory = self.root / '.legacy'
+        directory.mkdir()
+        for name, content in self.old.items():
+            (directory / name).write_bytes(content)
+            (self.root / name).unlink()
+            try:
+                os.symlink('.legacy/' + name, self.root / name)
+            except OSError as exc:
+                if sys.platform == 'win32':
+                    self.skipTest('Windows symlink privilege unavailable; Linux verification required')
+                raise exc
+        return directory
+
+    def test_safe_legacy_links_publish_without_modifying_targets(self):
+        directory = self.legacy_links()
+        result = self.transfer({'operation': 'publish', 'files': self.payload()})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for name, content in self.old.items():
+            self.assertFalse((self.root / name).is_symlink())
+            self.assertEqual((directory / name).read_bytes(), content)
+
+    def test_legacy_snapshot_and_restore_preserve_links_and_bytes(self):
+        self.legacy_links()
+        result = self.transfer({'operation': 'snapshot'})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        backup = json.loads(result.stdout)['files']
+        self.assertEqual(self.transfer({'operation': 'publish', 'files': self.payload()}).returncode, 0)
+        result = self.transfer({'operation': 'restore', 'files': backup})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for name in self.old:
+            self.assertEqual(os.readlink(self.root / name).replace('\\', '/'), '.legacy/' + name)
+        self.assert_unchanged()
+
+    def test_changed_legacy_target_blocks_restore_before_writes(self):
+        directory = self.legacy_links()
+        backup = json.loads(self.transfer({'operation': 'snapshot'}).stdout)['files']
+        files = self.payload()
+        self.assertEqual(self.transfer({'operation': 'publish', 'files': files}).returncode, 0)
+        (directory / 'sbom.json').write_bytes(b'changed')
+        self.assertNotEqual(self.transfer({'operation': 'restore', 'files': backup}).returncode, 0)
+        for name, entry in files.items():
+            self.assertEqual((self.root / name).read_bytes(), base64.b64decode(entry['data']))
+
+    def test_absolute_and_dangling_links_rejected(self):
+        self.legacy_links()
+        path = self.root / 'sbom.json'
+        for target in [str((self.root / '.legacy/sbom.json').resolve()), '.legacy/missing.json']:
+            with self.subTest(target=target):
+                path.unlink()
+                os.symlink(target, path)
+                self.assertNotEqual(self.transfer({'operation': 'snapshot'}).returncode, 0)
+                self.assertNotEqual(self.transfer({'operation': 'publish', 'files': self.payload()}).returncode, 0)
+
+    def test_parent_traversal_link_rejected(self):
+        self.legacy_links()
+        path = self.root / 'sbom.json'
+        path.unlink()
+        os.symlink('../' + self.root.name + '/.legacy/sbom.json', path)
+        self.assertNotEqual(self.transfer({'operation': 'snapshot'}).returncode, 0)
+
+    def test_symlinked_parent_escaping_volume_rejected(self):
+        self.legacy_links()
+        with tempfile.TemporaryDirectory() as outside:
+            (Path(outside) / 'sbom.json').write_bytes(b'outside')
+            os.symlink(outside, self.root / '.outside', target_is_directory=True)
+            path = self.root / 'sbom.json'
+            path.unlink()
+            os.symlink('.outside/sbom.json', path)
+            self.assertNotEqual(self.transfer({'operation': 'snapshot'}).returncode, 0)
+
+    def test_publish_packet_cannot_request_symlink_creation(self):
+        files = self.payload()
+        files['sbom.json']['symlink'] = '.legacy/sbom.json'
+        self.assertNotEqual(self.transfer({'operation': 'publish', 'files': files}).returncode, 0)
         self.assert_unchanged()
 
 
