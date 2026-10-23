@@ -75,6 +75,7 @@ Jenkins and Argo CD manage separate application resources. The GitOps applicatio
 | --- | --- |
 | Minikube | [Local cluster](docs/minikube.md) |
 | Deployment and backups | [Deployment automation](docs/deployment-automation.md) |
+| Current security reports | [Publication and recovery](docs/security-report-publication.md) |
 | Container findings | [Security review](docs/container-security-review.md) |
 | Kubernetes checks | [Checkov exception](docs/checkov-exceptions.md) |
 | Dockerfile lint | [Hadolint](docs/dockerfile-lint.md) |
