@@ -30,9 +30,21 @@ if operation not in {"snapshot","publish","restore"}:
     raise RuntimeError("Unknown report operation")
 if not root.is_dir() or root.is_symlink():
     raise RuntimeError("Invalid report directory")
+def legacy_target(target):
+    relative=Path(target)
+    if not isinstance(target,str) or relative.is_absolute() or '..' in relative.parts:
+        raise RuntimeError("Unsafe legacy report link")
+    resolved=(root/relative).resolve(strict=True)
+    if not resolved.is_relative_to(root.resolve()) or not resolved.is_file() or resolved in {root.resolve()/name for name in names}:
+        raise RuntimeError("Unsafe legacy report link")
+    if resolved.stat().st_size>limit:
+        raise RuntimeError("Existing report exceeds size bound")
+    return resolved
 for name in names:
     path=root/name
-    if path.is_symlink() or (path.exists() and not path.is_file()):
+    if path.is_symlink():
+        legacy_target(os.readlink(path))
+    elif path.exists() and not path.is_file():
         raise RuntimeError("Unexpected existing report path")
 if operation=="snapshot":
     result={}
@@ -45,23 +57,34 @@ if operation=="snapshot":
             raise RuntimeError("Existing report exceeds size bound")
         data=path.read_bytes()
         result[name]={"data":base64.b64encode(data).decode(),"sha256":hashlib.sha256(data).hexdigest()}
+        if path.is_symlink():
+            result[name]['symlink']=os.readlink(path)
     print(json.dumps({"files":result}))
 else:
     records=packet.get("files")
     if not isinstance(records,dict) or set(records)!=names:
         raise RuntimeError("Unexpected report file inventory")
     decoded={}
+    links={}
     for name,record in records.items():
         if record is None and operation=="restore":
             decoded[name]=None
             continue
-        if not isinstance(record,dict) or set(record)!={"data","sha256"}:
+        allowed=[{"data","sha256"}]
+        if operation=="restore":
+            allowed.append({"data","sha256","symlink"})
+        if not isinstance(record,dict) or set(record) not in allowed:
             raise RuntimeError("Malformed report record")
         data=base64.b64decode(record["data"],validate=True)
         if len(data)>limit or hashlib.sha256(data).hexdigest()!=record["sha256"]:
             raise RuntimeError("Report hash or size mismatch")
         if operation=="publish" and not isinstance(json.loads(data),dict):
             raise RuntimeError("Report must be a JSON object")
+        if 'symlink' in record:
+            target=legacy_target(record['symlink'])
+            if target.read_bytes()!=data:
+                raise RuntimeError("Legacy link target changed; protected backup requires inspection")
+            links[name]=record['symlink']
         decoded[name]=data
     staged={}
     try:
@@ -70,6 +93,11 @@ else:
                 continue
             fd,temporary=tempfile.mkstemp(prefix=".project15-report-",dir=root)
             staged[name]=Path(temporary)
+            if name in links:
+                os.close(fd)
+                os.unlink(temporary)
+                os.symlink(links[name],temporary)
+                continue
             with os.fdopen(fd,"wb") as stream:
                 os.chmod(temporary,0o640)
                 stream.write(data)

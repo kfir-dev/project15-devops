@@ -43,6 +43,13 @@ permissions on report files; it does not mount the database PVC.
 
 Previous report bytes are backed up outside Git in owner-only storage.
 Incoming filenames, JSON and SHA256 hashes are checked before writes.
+Legacy relative report symlinks are accepted only when their existing regular
+file targets resolve inside the same report volume, without parent traversal.
+Targets must not be either report entry itself. Snapshot records preserve link
+targets and bytes. Publication replaces the report entries with regular files
+without modifying the legacy targets. Rollback recreates the original links
+only after verifying the original target bytes still match the backup.
+Absolute, escaping and dangling links remain rejected.
 Files are staged and individually replaced atomically. The two separate
 endpoints are not a transactional pair during the short replacement window.
 
