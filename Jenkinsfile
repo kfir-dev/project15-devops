@@ -77,6 +77,14 @@ pipeline {
             }
         }
 
+        stage('Report publisher tests') {
+            steps {
+                dir('devops') {
+                    sh 'PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p test_report_publication.py -v'
+                }
+            }
+        }
+
         stage('Tests and coverage') {
             steps {
                 dir('application') {
@@ -184,6 +192,14 @@ pipeline {
             }
         }
 
+        stage('Publish current security reports') {
+            steps {
+                dir('devops') {
+                    sh 'python3 ci/publish-security-reports.py ../application/reports --execute'
+                }
+            }
+        }
+
         stage('Post-deployment API tests') {
             steps {
                 dir('devops') {
@@ -205,7 +221,7 @@ pipeline {
         always {
             junit testResults: 'application/reports/pytest.xml,application/reports/newman.xml',
                   allowEmptyResults: true
-            archiveArtifacts artifacts: 'application/reports/pip-audit.json,application/reports/hadolint.json,application/reports/coverage.xml,application/reports/scan-report.json,application/reports/sbom.json,application/reports/grype-report.json,application/reports/image-reference.txt,application/reports/image-publication.json,application/reports/checkov-report.json,application/reports/newman.xml,application/reports/deployment.json,application/reports/zap-report.json,application/reports/zap-report.html,application/reports/zap-coverage.json,application/reports/zap-summary.json',
+            archiveArtifacts artifacts: 'application/reports/pip-audit.json,application/reports/hadolint.json,application/reports/coverage.xml,application/reports/scan-report.json,application/reports/sbom.json,application/reports/sbom-binding.json,application/reports/grype-report.json,application/reports/image-reference.txt,application/reports/image-publication.json,application/reports/checkov-report.json,application/reports/newman.xml,application/reports/security-reports-publication.json,application/reports/deployment.json,application/reports/zap-report.json,application/reports/zap-report.html,application/reports/zap-coverage.json,application/reports/zap-summary.json',
                              allowEmptyArchive: true
         }
     }

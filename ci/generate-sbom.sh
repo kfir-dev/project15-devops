@@ -19,15 +19,17 @@ image="$1"
 mkdir -p -- "$2"
 report_dir="$(realpath -e -- "$2")"
 temporary="$(mktemp -d)"
+image_id="$(docker image inspect --format '{{.Id}}' "$image")"
 
 cleanup() {
     rm -f -- "$temporary/image.tar"
+    rm -f -- "$report_dir/sbom.syft.json"
     rmdir -- "$temporary"
 }
 trap cleanup EXIT
 
 docker image save --output "$temporary/image.tar" "$image"
-rm -f -- "$report_dir/sbom.json"
+rm -f -- "$report_dir/sbom.json" "$report_dir/sbom-binding.json" "$report_dir/sbom.syft.json"
 
 docker run --rm \
     --user "$(id -u):$(id -g)" \
@@ -38,7 +40,16 @@ docker run --rm \
     --volume "$temporary/image.tar:/image.tar:ro" \
     --volume "$report_dir:/reports" \
     "$SYFT_IMAGE" scan docker-archive:/image.tar \
-    --output cyclonedx-json=/reports/sbom.json
+    --output cyclonedx-json=/reports/sbom.json \
+    --output syft-json=/reports/sbom.syft.json
+
+if [[ "$(docker image inspect --format '{{.Id}}' "$image")" != "$image_id" ]]; then
+    printf 'STOP: image changed during SBOM generation.\n' >&2
+    exit 1
+fi
+python3 "$script_dir/bind-sbom.py" "$temporary/image.tar" \
+    "$report_dir/sbom.syft.json" "$report_dir/sbom.json" "$image_id" \
+    "$report_dir/sbom-binding.json"
 
 python3 - "$report_dir/sbom.json" <<'VERIFY_SBOM'
 import json
